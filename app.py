@@ -2,6 +2,7 @@
 
 from pathlib import Path
 import sys
+import tempfile
 
 import cv2
 import plotly.graph_objects as go
@@ -106,13 +107,34 @@ st.title("🛡️ CrowdShield AI")
 st.caption("Predict. Prevent. Protect. — Stage B: flow, risk, alerts and explainability.")
 st.markdown("<div class='stage'>SIMULATION · CPU-SAFE DEMO MODE · REAL VIDEO DATA</div>", unsafe_allow_html=True)
 
-video_options = [config.UMN_VIDEO_PATH]
+video_options = []
+if config.UMN_VIDEO_PATH.exists():
+    video_options.append(config.UMN_VIDEO_PATH)
 if config.VIDEOS_DIR.exists():
     video_options.extend(sorted(config.VIDEOS_DIR.glob("*.mp4")))
     video_options.extend(sorted(config.VIDEOS_DIR.glob("*.avi")))
-selected = st.sidebar.selectbox("Video", video_options, format_func=lambda path: path.name)
+uploaded_video = st.sidebar.file_uploader(
+    "Upload video for Simulation",
+    type=["avi", "mp4"],
+    help="The deployed app cannot access the repository's excluded data/ folder.",
+)
+selected = None
+if uploaded_video is not None:
+    upload_key = f"{uploaded_video.name}:{uploaded_video.size}"
+    if st.session_state.get("upload_key") != upload_key:
+        suffix = Path(uploaded_video.name).suffix.lower()
+        temporary_file = tempfile.NamedTemporaryFile(delete=False, suffix=suffix)
+        temporary_file.write(uploaded_video.getvalue())
+        temporary_file.close()
+        st.session_state.upload_key = upload_key
+        st.session_state.upload_path = temporary_file.name
+    selected = Path(st.session_state.upload_path)
+elif video_options:
+    selected = st.sidebar.selectbox("Video", video_options, format_func=lambda path: path.name)
+else:
+    st.sidebar.info("Simulation: upload an AVI or MP4 video to run the deployed demo.")
 st.sidebar.caption(f"Simulation: {config.ANALYSIS_SAMPLES_PER_SECOND:g} analysis samples/sec; flow uses adjacent source frames.")
-run = st.sidebar.button("Run demo", type="primary")
+run = st.sidebar.button("Run demo", type="primary", disabled=selected is None)
 
 if run:
     progress = st.progress(0, text="Simulation: precomputing sampled results...")

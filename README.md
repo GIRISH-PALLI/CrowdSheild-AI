@@ -30,6 +30,8 @@ YOLO runs at the configured dense analysis rate. Flow features are
 presence-gated, and the dashboard uses seconds on its charts. Set `SCENE_STARTS_S` and
 `PANIC_STARTS_S` in `src/config.py` to enable scene boundaries,
 panic markers, lead-time validation, and the before/after validation panel.
+When deployed, upload an AVI or MP4 through the sidebar because the repository
+intentionally excludes the `data/` video files.
 
 ## ShanghaiTech evaluation
 
